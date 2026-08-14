@@ -141,13 +141,13 @@ export default function LoginPage() {
             ? isRegister
               ? 'Đăng ký bằng số điện thoại — tài khoản được tạo sau khi xác thực OTP.'
               : 'Nhập số điện thoại để nhận mã OTP. Tài khoản mới được tạo tự động.'
-            : `Mã OTP ${IS_DEV ? '3' : '6'} chữ số.`}
+            : 'Nhập mã OTP gồm 3–6 chữ số.'}
         </p>
 
         {error && <div className="error-box">{error}</div>}
-        {IS_DEV && devOtp && (
+        {devOtp && (
           <div className="success-box">
-            <b>DEV:</b> mã OTP là <b className="mono">{devOtp}</b> (SMS mock — chỉ trong môi trường phát triển)
+            Mã OTP của bạn là <b className="mono">{devOtp}</b> (SMS mock — hiển thị để dùng thử)
           </div>
         )}
 
