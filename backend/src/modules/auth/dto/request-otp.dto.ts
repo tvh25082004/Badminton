@@ -14,9 +14,9 @@ export class VerifyOtpDto {
   @Matches(/^0\d{9}$/, { message: 'phone must be a valid Vietnamese number (0xxxxxxxxx)' })
   phone: string;
 
-  @ApiProperty({ example: '123456', description: 'Mã OTP 6 chữ số' })
+  @ApiProperty({ example: '333', description: 'Mã OTP 3 chữ số (dev: ADMIN=111, MODERATOR=222, PLAYER=333)' })
   @IsString()
-  @Matches(/^\d{6}$/, { message: 'otp must be exactly 6 digits' })
+  @Matches(/^\d{3}$/, { message: 'otp must be exactly 3 digits' })
   otp: string;
 
   @ApiProperty({

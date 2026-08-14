@@ -44,8 +44,8 @@ export default function LoginPage() {
   };
 
   const verifyOtp = async () => {
-    if (!/^\d{6}$/.test(otp)) {
-      setError('Mã OTP gồm đúng 6 chữ số.');
+    if (!/^\d{3}$/.test(otp)) {
+      setError('Mã OTP gồm đúng 3 chữ số.');
       return;
     }
     setError(null);
@@ -79,7 +79,7 @@ export default function LoginPage() {
         <p className="muted small" style={{ marginBottom: 20 }}>
           {step === 1
             ? 'Nhập số điện thoại để nhận mã OTP. Tài khoản mới sẽ được tạo tự động.'
-            : `Nhập mã OTP 6 chữ số vừa gửi tới ${phone}.`}
+            : `Nhập mã OTP 3 chữ số vừa gửi tới ${phone}.`}
         </p>
 
         {error && <div className="error-box">{error}</div>}
@@ -88,7 +88,6 @@ export default function LoginPage() {
             <b>DEV:</b> mã OTP là <b className="mono">{devOtp}</b> (SMS mock — chỉ trong môi trường phát triển)
           </div>
         )}
-
         {step === 1 ? (
           <>
             <div className="field">
@@ -115,8 +114,8 @@ export default function LoginPage() {
                 id="otp"
                 className="input mono"
                 inputMode="numeric"
-                maxLength={6}
-                placeholder="••••••"
+                maxLength={3}
+                placeholder="•••"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/[^\d]/g, ''))}
                 onKeyDown={(e) => e.key === 'Enter' && verifyOtp()}
@@ -137,9 +136,10 @@ export default function LoginPage() {
         )}
       </div>
 
-      <p className="faint small" style={{ textAlign: 'center', marginTop: 24 }}>
-        Số demo: 0901000001 · 0901000002 · 0901000005 (đã seed)
-      </p>
+      <div className="faint small" style={{ textAlign: 'center', marginTop: 24 }}>
+        <div>OTP cố định theo role: ADMIN=111 · MODERATOR=222 · PLAYER=333</div>
+        <div style={{ marginTop: 4 }}>Admin: 0900000000 · Mod: 0900000001 · Player: 0901000001</div>
+      </div>
     </div>
   );
 }

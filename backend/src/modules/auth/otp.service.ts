@@ -5,7 +5,20 @@ import * as argon2 from 'argon2';
 import { randomInt } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { OtpAttempt } from './entities/otp-attempt.entity';
-import { ConflictException, BadRequestAppException } from '../../common/errors/app-exception';
+import { User } from './entities/user.entity';
+import { BadRequestAppException } from '../../common/errors/app-exception';
+
+/**
+ * DEV ONLY (SMS_MOCK=true): OTP cố định 3 số theo role để test nhanh.
+ * - ADMIN = 111
+ * - MODERATOR = 222
+ * - PLAYER = 333 (mặc định cho SĐT chưa tồn tại)
+ */
+export const DEV_OTP_BY_ROLE: Record<string, string> = {
+  ADMIN: '111',
+  MODERATOR: '222',
+  PLAYER: '333',
+};
 
 export interface IssuedOtp {
   expiresInSeconds: number;
@@ -19,6 +32,7 @@ export class OtpService {
 
   constructor(
     @InjectRepository(OtpAttempt) private readonly otpRepo: Repository<OtpAttempt>,
+    @InjectRepository(User) private readonly userRepo: Repository<User>,
     private readonly config: ConfigService,
   ) {}
 
@@ -43,7 +57,8 @@ export class OtpService {
       }
     }
 
-    const otp = randomInt(100000, 999999).toString();
+    const mock = this.config.get<string>('SMS_MOCK', 'true') === 'true';
+    const otp = mock ? await this.devOtpFor(phone) : this.generateRandom();
     const otpHash = await argon2.hash(otp, { type: argon2.argon2id });
 
     await this.otpRepo.save(
@@ -55,13 +70,24 @@ export class OtpService {
       }),
     );
 
-    const mock = this.config.get<string>('SMS_MOCK', 'true') === 'true';
     if (mock) {
       this.logger.log(`[DEV SMS] OTP for ${phone} = ${otp}`);
     }
     // Thay bằng SMS provider integration tại đây khi có.
     return { expiresInSeconds: ttl, ...(mock ? { devOtp: otp } : {}) };
   }
+
+  /** DEV: OTP cố định theo role của SĐT; SĐT chưa đăng ký → PLAYER. */
+  private async devOtpFor(phone: string): Promise<string> {
+    const user = await this.userRepo.findOne({ where: { phone } });
+    const role = user?.role ?? 'PLAYER';
+    return DEV_OTP_BY_ROLE[role] ?? DEV_OTP_BY_ROLE.PLAYER;
+  }
+
+  private generateRandom(): string {
+    return randomInt(100000, 999999).toString();
+  }
+
 
   async verify(phone: string, otp: string): Promise<void> {
     const ttl = this.config.get<number>('OTP_TTL_SECONDS', 300);
