@@ -51,7 +51,8 @@ import { MobileOnlyGuard } from './common/guards/mobile-only.guard';
         database: config.get<string>('DB_NAME', 'badminton'),
         entities: [__dirname + '/modules/**/*.entity.{ts,js}'],
         // Dev-only: auto-sync. Production phải dùng migrations (expand-migrate-contract).
-        synchronize: config.get<string>('NODE_ENV', 'development') !== 'production',
+        // DB_SYNC bật chủ động khi chưa có migration (deploy DB mới).
+        synchronize: config.get<string>('DB_SYNC', config.get<string>('NODE_ENV', 'development') !== 'production' ? 'true' : 'false') === 'true',
         logging: ['error', 'warn'],
         retryAttempts: 10,
         retryDelay: 3000,

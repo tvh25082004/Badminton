@@ -23,9 +23,12 @@ async function bootstrap() {
 
   app.use(CorrelationIdMiddleware.apply());
 
-  // CORS allow-list (không dùng '*')
+  // CORS allow-list (không dùng '*' mặc định; hỗ trợ wildcard *.vercel.app)
   app.enableCors({
-    origin: env.corsOrigins,
+    origin: (origin, cb) => {
+      if (env.isOriginAllowed(origin)) return cb(null, true);
+      return cb(new Error(`Origin ${origin} not allowed by CORS`), false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   });

@@ -4,28 +4,49 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { publicApi, setTokens } from '@/lib/api';
+import { IS_DEV } from '@/lib/config';
+
+type Mode = 'login' | 'register';
+type Step = 1 | 2;
 
 export default function LoginPage() {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [mode, setMode] = useState<Mode>('login');
+  const [step, setStep] = useState<Step>(1);
+
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
+  const [name, setName] = useState('');
+  const [region, setRegion] = useState('');
+
   const [devOtp, setDevOtp] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [resendIn, setResendIn] = useState(0);
+
+  const isRegister = mode === 'register';
 
   const requestOtp = async () => {
     if (!/^0\d{9}$/.test(phone)) {
       setError('Số điện thoại phải là 10 chữ số, bắt đầu bằng 0 (VD: 0912345678).');
       return;
     }
+    if (isRegister) {
+      if (name.trim().length < 2) {
+        setError('Vui lòng nhập tên hiển thị (ít nhất 2 ký tự).');
+        return;
+      }
+      if (region.trim().length < 2) {
+        setError('Vui lòng nhập khu vực bạn thường chơi (VD: Quận 7, TP.HCM).');
+        return;
+      }
+    }
     setError(null);
     setBusy(true);
     try {
       const res = await publicApi<{ devOtp?: string; expiresInSeconds: string | number }>(
-        '/auth/otp/request',
-        { phone },
+        isRegister ? '/auth/register' : '/auth/otp/request',
+        isRegister ? { phone, name: name.trim(), region: region.trim() } : { phone },
       );
       if (res.devOtp) setDevOtp(res.devOtp);
       setStep(2);
@@ -44,16 +65,19 @@ export default function LoginPage() {
   };
 
   const verifyOtp = async () => {
-    if (!/^\d{3}$/.test(otp)) {
-      setError('Mã OTP gồm đúng 3 chữ số.');
+    if (!/^\d{3,6}$/.test(otp)) {
+      setError('Mã OTP gồm 3–6 chữ số.');
       return;
     }
     setError(null);
     setBusy(true);
     try {
+      const body = isRegister
+        ? { phone, otp, name: name.trim(), region: region.trim(), deviceId: `web-${Math.random().toString(36).slice(2, 8)}` }
+        : { phone, otp, deviceId: `web-${Math.random().toString(36).slice(2, 8)}` };
       const res = await publicApi<{ accessToken: string; refreshToken: string }>(
-        '/auth/otp/verify',
-        { phone, otp, deviceId: `web-${Math.random().toString(36).slice(2, 8)}` },
+        isRegister ? '/auth/register/verify' : '/auth/otp/verify',
+        body,
       );
       setTokens(res.accessToken, res.refreshToken);
       router.push('/app');
@@ -62,6 +86,14 @@ export default function LoginPage() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const switchMode = (m: Mode) => {
+    setMode(m);
+    setStep(1);
+    setError(null);
+    setDevOtp(null);
+    setOtp('');
   };
 
   return (
@@ -73,21 +105,52 @@ export default function LoginPage() {
       </header>
 
       <div className="card" style={{ marginTop: 40 }}>
-        <div className="card-title" style={{ fontSize: 20, fontWeight: 800 }}>
-          <span className="dot" /> Đăng nhập bằng số điện thoại
+        <div style={{ display: 'flex', gap: 6, marginBottom: 18, background: 'var(--bg-soft)', borderRadius: 10, padding: 4 }}>
+          {(['login', 'register'] as Mode[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => switchMode(m)}
+              style={{
+                flex: 1,
+                padding: '9px 0',
+                borderRadius: 8,
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font)',
+                fontWeight: 700,
+                fontSize: 14,
+                background: mode === m ? 'var(--lime)' : 'transparent',
+                color: mode === m ? '#0a0e13' : 'var(--text-dim)',
+              }}
+            >
+              {m === 'login' ? 'Đăng nhập' : 'Đăng ký'}
+            </button>
+          ))}
         </div>
-        <p className="muted small" style={{ marginBottom: 20 }}>
+
+        <div className="card-title" style={{ fontSize: 18, fontWeight: 800 }}>
+          <span className="dot" />
           {step === 1
-            ? 'Nhập số điện thoại để nhận mã OTP. Tài khoản mới sẽ được tạo tự động.'
-            : `Nhập mã OTP 3 chữ số vừa gửi tới ${phone}.`}
+            ? isRegister
+              ? 'Tạo tài khoản mới'
+              : 'Đăng nhập bằng số điện thoại'
+            : `Nhập mã OTP gửi tới ${phone}`}
+        </div>
+        <p className="muted small" style={{ marginBottom: 18 }}>
+          {step === 1
+            ? isRegister
+              ? 'Đăng ký bằng số điện thoại — tài khoản được tạo sau khi xác thực OTP.'
+              : 'Nhập số điện thoại để nhận mã OTP. Tài khoản mới được tạo tự động.'
+            : `Mã OTP ${IS_DEV ? '3' : '6'} chữ số.`}
         </p>
 
         {error && <div className="error-box">{error}</div>}
-        {devOtp && (
+        {IS_DEV && devOtp && (
           <div className="success-box">
             <b>DEV:</b> mã OTP là <b className="mono">{devOtp}</b> (SMS mock — chỉ trong môi trường phát triển)
           </div>
         )}
+
         {step === 1 ? (
           <>
             <div className="field">
@@ -102,8 +165,34 @@ export default function LoginPage() {
                 onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, ''))}
               />
             </div>
+            {isRegister && (
+              <>
+                <div className="field">
+                  <label htmlFor="name">Tên hiển thị</label>
+                  <input
+                    id="name"
+                    className="input"
+                    maxLength={50}
+                    placeholder="Nguyễn Văn A"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="region">Khu vực thường chơi</label>
+                  <input
+                    id="region"
+                    className="input"
+                    maxLength={120}
+                    placeholder="Quận 7, TP.HCM"
+                    value={region}
+                    onChange={(e) => setRegion(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
             <button className="btn btn-primary btn-block btn-lg" onClick={requestOtp} disabled={busy}>
-              {busy ? <span className="spin" /> : 'Gửi mã OTP'}
+              {busy ? <span className="spin" /> : isRegister ? 'Đăng ký & nhận mã OTP' : 'Gửi mã OTP'}
             </button>
           </>
         ) : (
@@ -114,15 +203,15 @@ export default function LoginPage() {
                 id="otp"
                 className="input mono"
                 inputMode="numeric"
-                maxLength={3}
-                placeholder="•••"
+                maxLength={6}
+                placeholder="••••••"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/[^\d]/g, ''))}
                 onKeyDown={(e) => e.key === 'Enter' && verifyOtp()}
               />
             </div>
             <button className="btn btn-primary btn-block btn-lg" onClick={verifyOtp} disabled={busy}>
-              {busy ? <span className="spin" /> : 'Xác nhận & vào ứng dụng'}
+              {busy ? <span className="spin" /> : isRegister ? 'Xác nhận & tạo tài khoản' : 'Xác nhận & vào ứng dụng'}
             </button>
             <button
               className="btn btn-ghost btn-block"
@@ -136,10 +225,12 @@ export default function LoginPage() {
         )}
       </div>
 
-      <div className="faint small" style={{ textAlign: 'center', marginTop: 24 }}>
-        <div>OTP cố định theo role: ADMIN=111 · MODERATOR=222 · PLAYER=333</div>
-        <div style={{ marginTop: 4 }}>Admin: 0900000000 · Mod: 0900000001 · Player: 0901000001</div>
-      </div>
+      {IS_DEV && (
+        <div className="faint small" style={{ textAlign: 'center', marginTop: 24 }}>
+          <div>OTP cố định theo role: ADMIN=111 · MODERATOR=222 · PLAYER=333</div>
+          <div style={{ marginTop: 4 }}>Admin: 0900000000 · Mod: 0900000001 · Player: 0901000001</div>
+        </div>
+      )}
     </div>
   );
 }

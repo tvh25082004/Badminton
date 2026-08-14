@@ -3,7 +3,13 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
-import { RequestOtpDto, RefreshTokenDto, VerifyOtpDto } from './dto/request-otp.dto';
+import {
+  RequestOtpDto,
+  RefreshTokenDto,
+  RegisterOtpDto,
+  RegisterVerifyDto,
+  VerifyOtpDto,
+} from './dto/request-otp.dto';
 import { CurrentUser, Public } from '../../common/decorators/auth.decorator';
 import { AuthenticatedUser } from '../../common/decorators/auth.decorator';
 
@@ -19,6 +25,24 @@ export class AuthController {
   @ApiOperation({ summary: 'Gửi mã OTP tới số điện thoại (dev: trả mã trong response)' })
   requestOtp(@Body() dto: RequestOtpDto) {
     return this.authService.requestOtp(dto.phone);
+  }
+
+  @Public()
+  @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Đăng ký bước 1: kiểm tra SĐT + gửi OTP' })
+  register(@Body() dto: RegisterOtpDto) {
+    return this.authService.register(dto.phone, dto.name, dto.region);
+  }
+
+  @Public()
+  @Post('register/verify')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Đăng ký bước 2: xác thực OTP → tạo tài khoản + cấp token' })
+  registerVerify(@Body() dto: RegisterVerifyDto) {
+    return this.authService.registerVerify(dto.phone, dto.otp, dto.name, dto.region, dto.deviceId);
   }
 
   @Public()

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
@@ -9,7 +9,8 @@ import { User } from './entities/user.entity';
 import { RefreshSession } from './entities/refresh-session.entity';
 import { OtpService } from './otp.service';
 import { TokenPair } from './dto/token.dto';
-import { UnauthorizedException } from '../../common/errors/app-exception';
+import { PlayerProfile } from '../players/entities/player-profile.entity';
+import { ConflictException, UnauthorizedException } from '../../common/errors/app-exception';
 import { USER_STATUS_ACTIVE } from '../../common/constants/domain';
 
 @Injectable()
@@ -17,6 +18,7 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
     @InjectRepository(RefreshSession) private readonly refreshRepo: Repository<RefreshSession>,
+    @InjectDataSource() private readonly dataSource: DataSource,
     private readonly otpService: OtpService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
@@ -24,6 +26,38 @@ export class AuthService {
 
   async requestOtp(phone: string) {
     return this.otpService.issue(phone);
+  }
+
+  /** Đăng ký bước 1: kiểm tra SĐT chưa tồn tại rồi gửi OTP. */
+  async register(phone: string, name: string, region: string) {
+    const existing = await this.userRepo.findOne({ where: { phone } });
+    if (existing) {
+      throw new ConflictException('PHONE_ALREADY_REGISTERED', 'Số điện thoại này đã đăng ký, vui lòng đăng nhập');
+    }
+    return this.otpService.issue(phone);
+  }
+
+  /** Đăng ký bước 2: verify OTP → tạo User + PlayerProfile (cùng transaction) → cấp token. */
+  async registerVerify(phone: string, otp: string, name: string, region: string, deviceId?: string): Promise<TokenPair> {
+    await this.otpService.verify(phone, otp);
+
+    const existing = await this.userRepo.findOne({ where: { phone } });
+    if (existing) {
+      throw new ConflictException('PHONE_ALREADY_REGISTERED', 'Số điện thoại này đã đăng ký, vui lòng đăng nhập');
+    }
+
+    const user = await this.dataSource.transaction(async (em) => {
+      const u = await em.save(
+        em.create(User, { phone, role: 'PLAYER', status: 'ACTIVE', displayName: name }),
+      );
+      await em.save(em.create(PlayerProfile, { userId: u.id, displayName: name, region }));
+      return u;
+    });
+    user.lastLoginAt = new Date();
+    await this.userRepo.save(user);
+
+    const pair = await this.issueTokenPair(user, deviceId, true);
+    return pair;
   }
 
   async verifyOtp(phone: string, otp: string, deviceId?: string): Promise<TokenPair> {

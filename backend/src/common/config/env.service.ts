@@ -22,10 +22,26 @@ export class EnvService {
   }
 
   get corsOrigins(): string[] {
-    return (this.config.get<string>('CORS_ORIGINS', 'http://localhost:3000') ?? '')
+    return (this.config.get<string>('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001') ?? '')
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
+  }
+
+  /**
+   * Kiểm tra origin có được phép không. Hỗ trợ:
+   * - '*' → allow mọi origin (chỉ khi chủ động bật)
+   * - khớp chính xác
+   * - wildcard '*.domain' (vd: '*.vercel.app' — domain Vercel thay đổi khi deploy)
+   */
+  isOriginAllowed(origin: string | undefined): boolean {
+    if (!origin) return true; // non-browser (curl, server-side)
+    const origins = this.corsOrigins;
+    if (origins.includes('*')) return true;
+    if (origins.includes(origin)) return true;
+    return origins.some(
+      (o) => o.startsWith('*.') && origin.endsWith(o.slice(1)),
+    );
   }
 
   get dbHost(): string {

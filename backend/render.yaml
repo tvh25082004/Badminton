@@ -1,0 +1,46 @@
+# Render Blueprint — deploy backend NestJS + Postgres công khai
+# Cách dùng: đẩy repo lên GitHub → Render → "Blueprint" → chọn repo này.
+services:
+  - type: web
+    name: badminton-api
+    runtime: docker
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_SYNC
+        value: 'true'
+      - key: DB_HOST
+        fromDatabase:
+          name: badminton-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: badminton-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: badminton-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: badminton-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: badminton-db
+          property: database
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: QR_HMAC_SECRET
+        generateValue: true
+      - key: SMS_MOCK
+        value: 'true'
+      - key: CORS_ORIGINS
+        value: 'http://localhost:3000,http://localhost:3001,*.vercel.app'
+
+  - type: postgres
+    name: badminton-db
+    plan: free
