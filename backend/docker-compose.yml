@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: badminton-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: badminton
+      POSTGRES_PASSWORD: badminton_dev_pw
+      POSTGRES_DB: badminton
+    ports:
+      - "25432:5432"
+    volumes:
+      - badminton_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U badminton -d badminton"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: badminton-redis
+    restart: unless-stopped
+    ports:
+      - "26380:6379"
+    volumes:
+      - badminton_redisdata:/data
+
+volumes:
+  badminton_pgdata:
+  badminton_redisdata:

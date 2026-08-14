@@ -1,0 +1,72 @@
+export const ROLE_PLAYER = 'PLAYER';
+export const ROLE_MODERATOR = 'MODERATOR';
+export const ROLE_ADMIN = 'ADMIN';
+
+export const ROLES = [ROLE_PLAYER, ROLE_MODERATOR, ROLE_ADMIN] as const;
+export type Role = (typeof ROLES)[number];
+
+export const USER_STATUS_ACTIVE = 'ACTIVE';
+export const USER_STATUS_SUSPENDED = 'SUSPENDED';
+export const USER_STATUSES = [USER_STATUS_ACTIVE, USER_STATUS_SUSPENDED] as const;
+export type UserStatus = (typeof USER_STATUSES)[number];
+
+export const RATING_TYPE_DOUBLES = 'DOUBLES';
+export type RatingType = typeof RATING_TYPE_DOUBLES;
+
+export const RATING_STATE_PROVISIONAL = 'PROVISIONAL';
+export const RATING_STATE_ESTABLISHED = 'ESTABLISHED';
+export const RATING_STATE_UNDER_REVIEW = 'UNDER_REVIEW';
+export const RATING_STATES = [
+  RATING_STATE_PROVISIONAL,
+  RATING_STATE_ESTABLISHED,
+  RATING_STATE_UNDER_REVIEW,
+] as const;
+export type RatingState = (typeof RATING_STATES)[number];
+
+export const MATCH_TYPE_SCHEDULED = 'SCHEDULED';
+export const MATCH_TYPE_QUICK = 'QUICK';
+export type MatchType = typeof MATCH_TYPE_SCHEDULED | typeof MATCH_TYPE_QUICK;
+
+export const MATCH_MODE_RATED = 'RATED';
+export const MATCH_MODE_UNRATED = 'UNRATED';
+export type MatchMode = typeof MATCH_MODE_RATED | typeof MATCH_MODE_UNRATED;
+
+export const MATCH_FORMAT_BEST_OF_3 = 'BEST_OF_3';
+export const MATCH_FORMAT_SINGLE_GAME_21 = 'SINGLE_GAME_21';
+export const MATCH_FORMAT_CUSTOM = 'CUSTOM';
+export const RATED_FORMATS = [MATCH_FORMAT_BEST_OF_3, MATCH_FORMAT_SINGLE_GAME_21] as const;
+
+export const MATCH_STATUS_DRAFT = 'DRAFT';
+export const MATCH_STATUS_READY = 'READY';
+export const MATCH_STATUS_CHECKED_IN = 'CHECKED_IN';
+export const MATCH_STATUS_PLAYING = 'PLAYING';
+export const MATCH_STATUS_PENDING_CONFIRM = 'PENDING_CONFIRM';
+export const MATCH_STATUS_CONFIRMED = 'CONFIRMED';
+export const MATCH_STATUS_RATED = 'RATED';
+export const MATCH_STATUS_PENDING_REVIEW = 'PENDING_REVIEW';
+export const MATCH_STATUS_DISPUTED = 'DISPUTED';
+export const MATCH_STATUS_RESOLVED = 'RESOLVED';
+export const MATCH_STATUS_VOIDED = 'VOIDED';
+
+export const SESSION_STATUS_DRAFT = 'DRAFT';
+export const SESSION_STATUS_OPEN = 'OPEN';
+export const SESSION_STATUS_FULL = 'FULL';
+export const SESSION_STATUS_IN_PROGRESS = 'IN_PROGRESS';
+export const SESSION_STATUS_COMPLETED = 'COMPLETED';
+export const SESSION_STATUS_CANCELLED = 'CANCELLED';
+
+export const CONFIRM_CONFIRM = 'CONFIRM';
+export const CONFIRM_DISPUTE = 'DISPUTE';
+
+export const DISPUTE_STATUS_OPEN = 'OPEN';
+export const DISPUTE_STATUS_RESOLVED = 'RESOLVED';
+export const DISPUTE_DECISION_KEEP_RESULT = 'KEEP_RESULT';
+export const DISPUTE_DECISION_VOID_MATCH = 'VOID_MATCH';
+
+export const TXN_STATE_PENDING = 'PENDING';
+export const TXN_STATE_APPLIED = 'APPLIED';
+export const TXN_STATE_REVERSED = 'REVERSED';
+
+export const TXN_TYPE_INITIAL = 'INITIAL';
+export const TXN_TYPE_MATCH_RESULT = 'MATCH_RESULT';
+export const TXN_TYPE_REVERSAL = 'REVERSAL';
