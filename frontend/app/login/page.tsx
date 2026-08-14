@@ -9,6 +9,12 @@ import { IS_DEV } from '@/lib/config';
 type Mode = 'login' | 'register';
 type Step = 1 | 2;
 
+const QUICK_ACCOUNTS = [
+  { label: 'ADMIN', phone: '0900000000' },
+  { label: 'MODERATOR', phone: '0900000001' },
+  { label: 'PLAYER', phone: '0901000001' },
+];
+
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>('login');
@@ -94,6 +100,27 @@ export default function LoginPage() {
     setError(null);
     setDevOtp(null);
     setOtp('');
+  };
+
+  // Dev-only: login 1 chạm theo vai trò (bỏ qua gõ OTP)
+  const quickLogin = async (phone: string) => {
+    setError(null);
+    setBusy(true);
+    try {
+      const req = await publicApi<{ devOtp?: string }>('/auth/otp/request', { phone });
+      const otp = req.devOtp ?? '333';
+      const res = await publicApi<{ accessToken: string; refreshToken: string }>('/auth/otp/verify', {
+        phone,
+        otp,
+        deviceId: `quick-${Math.random().toString(36).slice(2, 8)}`,
+      });
+      setTokens(res.accessToken, res.refreshToken);
+      router.push('/app');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Đăng nhập nhanh thất bại.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -224,6 +251,27 @@ export default function LoginPage() {
           </>
         )}
       </div>
+
+      {IS_DEV && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <div className="faint small" style={{ marginBottom: 10, textAlign: 'center' }}>
+            Đăng nhập nhanh theo vai trò (dev — bấm là vào, không cần OTP)
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            {QUICK_ACCOUNTS.map((a) => (
+              <button
+                key={a.phone}
+                className="btn"
+                style={{ padding: '8px 0', fontSize: 13 }}
+                onClick={() => quickLogin(a.phone)}
+                disabled={busy}
+              >
+                {busy ? <span className="spin" /> : a.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {IS_DEV && (
         <div className="faint small" style={{ textAlign: 'center', marginTop: 24 }}>

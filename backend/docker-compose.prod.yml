@@ -1,0 +1,38 @@
+# Production stack cho VPS — backend API + Postgres (không cần Redis ở MVP)
+# Dùng: cp .env.production.example .env  →  chỉnh secret  →  docker compose -f docker-compose.prod.yml up -d --build
+services:
+  api:
+    build: .
+    image: badminton-api
+    container_name: badminton-api
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/api/docs"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: badminton-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-badminton}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change-me}
+      POSTGRES_DB: ${DB_NAME:-badminton}
+    volumes:
+      - badminton_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-badminton} -d ${DB_NAME:-badminton}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  badminton_pgdata:
