@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug: cho phép cleartext để kết nối backend local (10.0.2.2 / LAN).
+     KHÔNG bao giờ dùng cấu hình này cho release. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

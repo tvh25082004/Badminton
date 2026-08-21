@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Vector: quả cầu lông cách điệu trên nền tối -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- thân vợt/cầu: hình quạt vạch sân -->
+    <path
+        android:pathData="M54,30 C40,30 32,42 34,54 C36,66 46,74 54,78 C62,74 72,66 74,54 C76,42 68,30 54,30 Z"
+        android:strokeColor="#A8E063"
+        android:strokeWidth="4"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M38,44 L70,44 M35,55 L73,55 M39,66 L69,66"
+        android:strokeColor="#A8E063"
+        android:strokeWidth="2.5" />
+    <path
+        android:pathData="M54,78 L50,88 L58,88 Z"
+        android:fillColor="#FFB454" />
+    <path
+        android:pathData="M50,24 L54,14 L58,24"
+        android:strokeColor="#BFF08A"
+        android:strokeWidth="3"
+        android:fillColor="#00000000" />
+</vector>
